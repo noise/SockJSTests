@@ -1,3 +1,7 @@
+# Overview
+
+A simple prototype to test out SockJS w/Redis pub/sub for a scalable push channel
+
 # First, install stuff
 
 ```sh

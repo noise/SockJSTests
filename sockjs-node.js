@@ -21,6 +21,7 @@ var sockjs_opts = {sockjs_url: 'http://cdn.sockjs.org/sockjs-0.1.min.js'};
 
 // keep track of connected clients
 var connections = new Array();
+var connsByUsername = {};
 
 // helper for logging
 // TODO: make this a method on the connection object
@@ -48,12 +49,10 @@ echo.on('connection', function(conn) {
         // handle setting of username
         if (message.indexOf('/user') == 0) {
             conn.user = message.substring(message.indexOf(' ')+1, message.length); // todo: not safe
+            connsByUsername[conn.user] = conn;
             console.log(connId(conn) + ' set user to ' + conn.user);
         }
         else {
-            // echo it back
-//            conn.write(message);
-        
             broadcast(conn.user + ' says ' + message);
         }
     });
@@ -64,6 +63,10 @@ echo.on('connection', function(conn) {
         var idx = connections.indexOf(conn); 
         if(idx!=-1) {
             connections.splice(idx, 1); 
+            // TODO: the disco comes in after the reconn, and this kills our association
+            if (conn.name != undefined) {
+                connsByUsername[name] = undefined;
+            }
             console.log('total conns: ' + connections.length);
             broadcast(connId(conn) + ' left');
         }
@@ -84,15 +87,24 @@ redisSubClient.on('message', function (channel, message) {
     console.log('redis channel ' + channel + ': ' + message);
     to = message.substring(0, message.indexOf(' '));
     console.log('to: ' + to);
-    for (idx in connections) {
-        conn = connections[idx];
-        // send to specified user id or all connected clients
-        if (conn.user === to || to === '_all') {
-            console.log('user: ' + conn.user + ', send');
-            conn.write(message.substring(message.indexOf(' '), message.length));
+
+    // send to specified user id or all connected clients
+    if (to != '_all') {
+        conn = connsByUsername[to];
+        if (conn === undefined) {
+            console.log('unknown user: ' + to);
         }
         else {
-            console.log('user: ' + conn.user + ', skipped');
+            conn.write(message.substring(message.indexOf(' '), message.length));
+            console.log('user: ' + conn.user + ', send');
+        }
+    }
+    else {
+        // broadcast
+        console.log('broadcast');
+        for (idx in connections) {
+            conn = connections[idx];
+            conn.write(message.substring(message.indexOf(' '), message.length));
         }
     }
 });

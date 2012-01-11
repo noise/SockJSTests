@@ -23,10 +23,12 @@ node sockjs-node.js
 # Load client pages
 
 ```sh
-open sockjs.html
+http://localhost:8000
 ```
 
 # Send some messages
+
+Either from each client or via redis-cli:
 
 ```sh
 redis-cli

@@ -24,30 +24,38 @@
 </script>
 
 <script type="text/javascript">
+  var MAX_RECONNS = 5;
   var sock;
   var user;
   var reconnTimer;
+  var reconnAttempts = 0;
   function connect() {
     out('connect...');
-    out('canceling timer');
-    clearTimeout(reconnTimer);
+   clearTimeout(reconnTimer);
+    reconnAttempts++;
     sock = new SockJS('/echo');
     sock.onopen = function() {
       out('open');
+      reconnAttempts = 0;
       setUser(user);
     };    
     sock.onmessage = function(e) {
-    out ('message:' + e.data);
-  };    
-  sock.onclose = function() {
-      console.log('close');
-      reconnTimer = setInterval(function(){
-          try{
-            connect()
-          } catch (x) {
-          }
-      }, 1000);
+      out ('message:' + e.data);
     };    
+    sock.onclose = function() {
+      console.log('close');
+      if (reconnAttempts < MAX_RECONNS) {
+        reconnTimer = setInterval(function(){
+            try{
+              connect()
+            } catch (x) {
+            }
+          }, 1000);
+      }
+      else {
+        out('max reconnect tries (' + MAX_RECONNS + ') exhausted, giving up.');
+      }
+    }
   }
 
   function send() {

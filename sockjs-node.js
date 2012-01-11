@@ -1,6 +1,7 @@
 var http = require('http');
 var sockjs = require('sockjs');
 var redis = require('redis');
+var node_static = require('node-static');
 
 var REDIS_CHANNEL = 'sockjs';
 var BROADCAST_MAGIC_USERNAME = '_all';
@@ -45,7 +46,6 @@ echo.on('connection', function(conn) {
 
     // handle messages from clients
     conn.on('data', function(message) {
-        
         // handle setting of username
         if (message.indexOf('/user') == 0) {
             conn.user = message.substring(message.indexOf(' ')+1, message.length); // todo: not safe
@@ -76,10 +76,34 @@ echo.on('connection', function(conn) {
     });
 });
 
+// Static files server
+var static_directory = new node_static.Server(__dirname);
+
 // actually create the server and start listening
 var server = http.createServer();
+
+server.addListener('request', function(req, res) {
+    try {
+        if (req.url === '/') {
+            //console.log('index: ' + req.headers.host);
+            var redir =  'http://' + req.headers.host + '/static/';
+            res.writeHead(302, {'Content-Type': 'text/plain', 'Location': redir});
+            res.end();
+        }
+        else {
+            static_directory.serve(req, res);
+        }
+    } catch(x) {
+        console.log(x);
+    }
+});
+server.addListener('upgrade', function(req,res){
+    res.end();
+});
+
 echo.installHandlers(server, {prefix:'[/]echo'});
 server.listen(8000, '0.0.0.0');
+
 
 // subscribe to the pub/sub channel
 redisSubClient.subscribe(REDIS_CHANNEL);

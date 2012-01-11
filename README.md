@@ -10,6 +10,7 @@ brew install redis
 curl http://npmjs.org/install.sh | sh
 npm install redis
 npm install sockjs
+npm install node-static
 ```
 
 # Start servers

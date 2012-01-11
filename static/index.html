@@ -31,7 +31,7 @@
     out('connect...');
     out('canceling timer');
     clearTimeout(reconnTimer);
-    sock = new SockJS('http://localhost:8000/echo');
+    sock = new SockJS('/echo');
     sock.onopen = function() {
       out('open');
       setUser(user);

@@ -136,8 +136,10 @@ redisSubClient.on('message', function (channel, message) {
         // broadcast
         console.log('broadcast');
         for (idx in connections) {
-            conn = connections[idx];
-            conn.write(message.substring(message.indexOf(' '), message.length));
+            if (connections.hasOwnProperty(idx)) {
+                conn = connections[idx];
+                conn.write(message.substring(message.indexOf(' '), message.length));
+            }
         }
     }
 });

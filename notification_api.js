@@ -14,8 +14,8 @@ Client API to queue a message:
 
 */
 
-var sys = require('sys')
-var url = require('url')
+var sys = require('sys');
+var url = require('url');
 var express = require('express');
 var redis = require('redis');
 
@@ -26,27 +26,30 @@ var HISTORY_LEN = 5;
 var HISTORY_TTL = 20; // seconds
 var REDIS_CHANNEL = 'sockjs';
 
-redisClient = redis.createClient();
+var redisClient = redis.createClient();
 redisClient.on('error', function (err) {
+    'use strict';
     console.log('Error ' + err);
 });
 
-app.post('/', function(req, res){
+app.post('/', function (req, res) {
+    'use strict';
     console.log(req.body);
-    var uid = req.body.uid;
-    var msg = req.body.msg;
+    var ts, msg, uid, message;
+    uid = req.body.uid;
+    msg = req.body.msg;
     console.log('uid: ' + uid);
     console.log('msg: ' + msg);
 
-    var ts =  new Date().getTime()
+    ts =  new Date().getTime();
     req.body.ts = ts;
-    message = sys.inspect(req.body)
+    message = JSON.stringify(req.body);
     console.log(message);
 
     // TODO: screen inputs 
     redisClient.zadd('nl:' + uid, ts, message);
     redisClient.expire('nl:' + uid, HISTORY_TTL);
-    redisClient.zcard('nl:' + uid, function(err, len) {
+    redisClient.zcard('nl:' + uid, function (err, len) {
         if (err) {
             return console.error("error response - " + err);
         }

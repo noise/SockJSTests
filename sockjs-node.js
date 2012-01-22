@@ -9,45 +9,50 @@ var BROADCAST_MAGIC_USERNAME = '_all';
 // get a redis connection
 // need 2 clients as the subscriber is blocking, see https://github.com/mranney/node_redis
 // TODO: reconnect on error
-redisSubClient = redis.createClient();
-redisPubClient = redis.createClient();
+var redisSubClient = redis.createClient();
+var redisPubClient = redis.createClient();
 redisSubClient.on('error', function (err) {
+    'use strict';
     console.log('Error ' + err);
 });
 redisPubClient.on('error', function (err) {
+    'use strict';
     console.log('Error ' + err);
 });
 
 var sockjs_opts = {sockjs_url: 'http://cdn.sockjs.org/sockjs-0.1.min.js'};
 
 // keep track of connected clients
-var connections = new Array();
+var connections = [];
 var connsByUsername = {};
 
 // helper for logging
 // TODO: make this a method on the connection object
 function connId(conn) {
+    'use strict';
     return [conn.remoteAddress + ':' + conn.remotePort];
 }
 
 // send this to redis(and then we'll get it from our subscription and relay to clients
 // we don't just broadcast directly since we'll have multiple sockjs servers and need everyone to get this
 function broadcast(msg) {
+    'use strict';
     redisPubClient.publish(REDIS_CHANNEL, BROADCAST_MAGIC_USERNAME + ' ' + msg);
 }
 
 // create our server and setup handlers
 var echo = sockjs.createServer(sockjs_opts);
-echo.on('connection', function(conn) {
+echo.on('connection', function (conn) {
+    'use strict';
     connections.push(conn);
     console.log('open, ' + connId(conn));
     console.log('total conns: ' + connections.length);
     broadcast(connId(conn) + ' joined');
 
     // handle messages from clients
-    conn.on('data', function(message) {
+    conn.on('data', function (message) {
         // handle setting of username
-        if (message.indexOf('/user') == 0) {
+        if (message.indexOf('/user') === 0) {
             conn.user = message.substring(message.indexOf(' ')+1, message.length); // todo: not safe
             connsByUsername[conn.user] = conn;
             console.log(connId(conn) + ' set user to ' + conn.user);
@@ -58,14 +63,14 @@ echo.on('connection', function(conn) {
     });
 
     // on close, remove them from the list, broadcast change of presence
-    conn.on('close', function() {
+    conn.on('close', function () {
         console.log('closed, ' + connId(conn));
         var idx = connections.indexOf(conn); 
-        if(idx!=-1) {
+        if(idx !== -1) {
             connections.splice(idx, 1); 
             // TODO: the disco comes in after the reconn, and this kills our association
-            if (conn.name != undefined) {
-                connsByUsername[name] = undefined;
+            if (conn.name !== undefined) {
+                connsByUsername[conn.name] = undefined;
             }
             console.log('total conns: ' + connections.length);
             broadcast(connId(conn) + ' left');
@@ -83,6 +88,7 @@ var static_directory = new node_static.Server(__dirname);
 var server = http.createServer();
 
 server.addListener('request', function(req, res) {
+    'use strict';
     try {
         if (req.url === '/') {
             //console.log('index: ' + req.headers.host);
@@ -98,6 +104,7 @@ server.addListener('request', function(req, res) {
     }
 });
 server.addListener('upgrade', function(req,res){
+    'use strict';
     res.end();
 });
 
@@ -108,12 +115,14 @@ server.listen(8000, '0.0.0.0');
 // subscribe to the pub/sub channel
 redisSubClient.subscribe(REDIS_CHANNEL);
 redisSubClient.on('message', function (channel, message) {
+    'use strict';
     console.log('redis channel ' + channel + ': ' + message);
+    var to, idx, conn;
     to = message.substring(0, message.indexOf(' '));
     console.log('to: ' + to);
 
     // send to specified user id or all connected clients
-    if (to != '_all') {
+    if (to !== '_all') {
         conn = connsByUsername[to];
         if (conn === undefined) {
             console.log('unknown user: ' + to);

@@ -17,15 +17,8 @@ npm install node-static
 
 ```sh
 redis-server
-node sockjs-node.js
+node notification.js
 ```
-
-# Optionally start the HTTP sending API server
-```sh
-redis-server
-node notification-api.js
-```
-
 
 # Load client pages
 
@@ -35,15 +28,8 @@ http://localhost:8000
 
 # Send some messages
 
-Either from each client or via redis-cli:
+Either from each client or via the API
 
-```sh
-redis-cli
-publish sockjs "_all broadcast to all users"
-publish sockjs "foo1 private message for foo1"
-```
-
-Or via the API
 ```sh
 curl -X POST -d "uid=1234" -d "msg=hello to 1234" http://localhost:8001
 curl -X POST -d "msg=hello to all" http://localhost:8001

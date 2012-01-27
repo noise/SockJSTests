@@ -1,99 +1,22 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" >  
 <head>  
-  <title>SockJS Test</title>
-  <script src="http://cdn.sockjs.org/sockjs-0.1.min.js" type="text/javascript"></script>
+  <title>Notification Service Test</title>
+  <script src="http://cdn.sockjs.org/sockjs-0.1.js" type="text/javascript"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript"></script>
   <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.7.2/jquery-ui.min.js" type="text/javascript"></script>
 </head> 
-         
 <body>  
-
-<script type="text/javascript">
-  // try to subvert ESC in firefox killing websocket connection
-/**
-  $(document).ready(function(){ 
-    $(this).keypress(function(e){ 
-      if(e.keyCode == 27){ 
-        alert('oh no you don't!');
-        return false; 
-      } 
-    }); 
-  }); 
-*/
-</script>
-
-<script type="text/javascript">
-  var MAX_RECONNS = 5;
-  var sock;
-  var user;
-  var reconnTimer;
-  var reconnAttempts = 0;
-  function connect() {
-    out('connect...');
-   clearTimeout(reconnTimer);
-    reconnAttempts++;
-    sock = new SockJS('/echo');
-    sock.onopen = function() {
-      out('open');
-      reconnAttempts = 0;
-      setUser(user);
-    };    
-    sock.onmessage = function(e) {
-      out ('message:' + e.data);
-    };    
-    sock.onclose = function() {
-      console.log('close');
-      if (reconnAttempts < MAX_RECONNS) {
-        reconnTimer = setInterval(function(){
-            try{
-              connect()
-            } catch (x) {
-            }
-          }, 1000);
-      }
-      else {
-        out('max reconnect tries (' + MAX_RECONNS + ') exhausted, giving up.');
-      }
-    }
-  }
-
-  function send() {
-    input = $("#msg").val();
-    sock.send(input);
-    out('send:' + input);
-  }
-
-  function setUser() {
-    user = $("#user").val();
-    sock.send("/user " + user);
-   out('user:' +user);
-  }
-
-  function kill() {
-    sock.close();
-  }
-  
-  function out(msg) {
-    console.log(msg);
-    $("#out").append(msg + "\n");
-  } 
-  function clearOut() {
-    $("#out").text("");
-  } 
-
-  console.log('boo!');
-  connect();
-</script>
+<script src="notification-client.js" type="text/javascript"></script>
 
 user: 
 <input id="user" type="text" size="30" value="foo1"/>
-<input type="submit" onclick="setUser()"/>
+<input type="submit" onclick="setUser()" value="set uid"/>
 <input type="submit" onclick="kill()" value="kill connection"/>
 <br/>
  message: 
 <input id="msg" type="text" size="30" value="foo"></input>
-<input type="submit" onclick="send()" value="send" />
+<input type="submit" onclick="sendChat()" value="send" />
 <hr/>
 messages:<input type="submit" onclick="clearOut()" value="clear"/>
 <br/>

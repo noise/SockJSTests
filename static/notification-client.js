@@ -1,3 +1,6 @@
+/*global console, $, SockJS */
+/* because I'm not abusing ++ */
+/*jslint plusplus:true */
 var MAX_RECONNS = 5;
 var sock;
 var user;
@@ -16,7 +19,7 @@ function clearOut() {
 
 function sendChat() {
     'use strict';
-    var msg = {}
+    var msg = {};
     msg.type = 'chat';
     msg.msg = $("#msg").val();
     
@@ -26,7 +29,7 @@ function sendChat() {
 
 function setUser() {
     'use strict';
-    var msg = {}
+    var msg = {};
     msg.type = 'uid';
     msg.msg = $("#user").val();
     sock.send(JSON.stringify(msg));

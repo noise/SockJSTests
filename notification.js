@@ -1,10 +1,12 @@
+/* standard exceptions for node.js */
+/*jslint node: true nomen: true */
 /**
 This node server handles the following functions:
 
 * / : index html page
 * /channel: SockJS websocket channel
 * /notifications: POST API for queueing messages
-* /static/* : static files
+* /static/ : static files
 
 The notifications API exposes a basic HTTP API for queueing
 notification messages for a given client. Messages are added to a
@@ -122,11 +124,11 @@ echo.on('connection', function (conn) {
                 break;
             case MSG_TYPE_CHAT:
                 console.log('<- ' + JSON.stringify(msg));
-                msg.from = conn.uid
+                msg.from = conn.uid;
                 broadcast(JSON.stringify(msg));
                 break;
             default:
-                console.log('unknown message type from ' + connID(conn));
+                console.log('unknown message type from ' + connId(conn));
                 break;
             }
         }

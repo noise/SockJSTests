@@ -11,18 +11,18 @@ function out(msg) {
     'use strict';
     console.log(msg);
     $("#out").append(msg + "\n");
-} 
+}
 function clearOut() {
     'use strict';
     $("#out").text("");
-} 
+}
 
 function sendChat() {
     'use strict';
     var msg = {};
     msg.type = 'chat';
     msg.msg = $("#msg").val();
-    
+
     sock.send(JSON.stringify(msg));
     out('-> ' + JSON.stringify(msg));
 }
@@ -47,27 +47,26 @@ function connect() {
     clearTimeout(reconnTimer);
     reconnAttempts++;
     sock = new SockJS('/channel');
-    sock.onopen = function() {
+    sock.onopen = function () {
         out('== open');
         reconnAttempts = 0;
         setUser(user);
-    };    
-    sock.onmessage = function(e) {
+    };
+    sock.onmessage = function (e) {
         // TODO: catch errs
-        out ('<- ' + e.data);
+        out('<- ' + e.data);
         var msg = JSON.parse(e.data);
-    };    
-    sock.onclose = function() {
+    };
+    sock.onclose = function () {
         console.log('close');
         if (reconnAttempts < MAX_RECONNS) {
-            reconnTimer = setInterval(function(){
-                try{
+            reconnTimer = setInterval(function () {
+                try {
                     connect();
                 } catch (x) {
                 }
             }, 1000);
-        }
-        else {
+        } else {
             out('== max reconnect tries (' + MAX_RECONNS + ') exhausted, giving up.');
         }
     };

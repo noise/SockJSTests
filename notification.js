@@ -1,30 +1,30 @@
 /* standard exceptions for node.js */
 /*jslint node: true nomen: true */
 /**
-This node server handles the following functions:
+   This node server handles the following functions:
 
-* / : index html page
-* /channel: SockJS websocket channel
-* /notifications: POST API for queueing messages
-* /static/ : static files
+   * / : index html page
+   * /channel: SockJS websocket channel
+   * /notifications: POST API for queueing messages
+   * /static/ : static files
 
-The notifications API exposes a basic HTTP API for queueing
-notification messages for a given client. Messages are added to a
-Redis ZSET for each user id. The set is truncated to HISTORY_LEN
-messages on each addition, and has a TTL for the entire set of
-HISTORY_TTL seconds. On websocket connection, the server will
-send all available history to the client and start sending then
-incoming real-time messages from the pub-sub channel. Clients will be
-responsible for de-duping already receieved messages based on the
-message timestamps.
+   The notifications API exposes a basic HTTP API for queueing
+   notification messages for a given client. Messages are added to a
+   Redis ZSET for each user id. The set is truncated to HISTORY_LEN
+   messages on each addition, and has a TTL for the entire set of
+   HISTORY_TTL seconds. On websocket connection, the server will
+   send all available history to the client and start sending then
+   incoming real-time messages from the pub-sub channel. Clients will be
+   responsible for de-duping already receieved messages based on the
+   message timestamps.
 
-USAGE: 
+   USAGE: 
 
-Server:
-  node ./notification.js
+   Server:
+   node ./notification.js
 
-Client API to queue a message:
-  curl -X POST -d "uid=1234" -d "msg=hello" http://localhost:8000
+   Client API to queue a message:
+   curl -X POST -d "uid=1234" -d "msg=hello" http://localhost:8000
 */
 
 var sys = require('sys');
@@ -94,8 +94,7 @@ echo.on('connection', function (conn) {
     conn.on('data', function (messageStr) {
         try {
             msg = JSON.parse(messageStr);
-        }
-        catch (x) {
+        } catch (x) {
             console.log('bad message from client: ' + messageStr);
             return;
         }
@@ -138,9 +137,9 @@ echo.on('connection', function (conn) {
     conn.on('close', function () {
         console.log('closed, ' + connId(conn));
         var idx, msg = {};
-        idx = connections.indexOf(conn); 
+        idx = connections.indexOf(conn);
         if (idx !== -1) {
-            connections.splice(idx, 1); 
+            connections.splice(idx, 1);
             // TODO: the disco comes in after the reconn, and this kills our association
             if (conn.name !== undefined) {
                 connsByUsername[conn.name] = undefined;
@@ -149,8 +148,8 @@ echo.on('connection', function (conn) {
             //msg = {};
             msg.msg = connId(conn) + ' left';
             msg.ts = new Date().getTime();
-            broadcast(JSON.stringify(msg));      
-        } else { 
+            broadcast(JSON.stringify(msg));
+        } else {
             console.log('disconnected client not in connections list: ' + connId(conn));
         }
     });
@@ -203,7 +202,7 @@ server.get('/', function (req, res) {
         var redir =  'http://' + req.headers.host + '/static/';
         res.writeHead(302, {'Content-Type': 'text/plain', 'Location': redir});
         res.end();
-    } catch(x) {
+    } catch (x) {
         console.log(x);
     }
 });
@@ -213,12 +212,12 @@ server.get('/static/*', function (req, res) {
     static_directory.serve(req, res);
 });
 
-server.addListener('upgrade', function (req,res){
+server.addListener('upgrade', function (req, res) {
     'use strict';
     res.end();
 });
 
-echo.installHandlers(server, {prefix:'[/]channel'});
+echo.installHandlers(server, { prefix: '[/]channel' });
 server.listen(8000, '0.0.0.0');
 
 
@@ -231,29 +230,26 @@ redisSubClient.on('message', function (channel, message) {
     console.log('<- (redis sub) ' + message);
     try {
         msg = JSON.parse(message);
-    }
-    catch (x) {
+    } catch (x) {
         console.log('!! parse fail: ' + sys.inspect(x));
         return;
     }
 
     to = msg.uid;
 
-    // send to specified user id
     if (to !== undefined) {
+        // send to specified user id
         conn = connsByUsername[to];
         if (conn === undefined) {
             console.log('!! unknown user: ' + to);
-        }
-        else {
+        } else {
             conn.write(JSON.stringify(msg));
             console.log('-> (' + conn.uid + ') ' + msg.msg);
         }
-    }
-    // broadcast
-    else {
+    } else {
+        // broadcast
         console.log('-> (broadcast) ' + JSON.stringify(msg));
-        for (idx in connections) { 
+        for (idx in connections) {
             if (connections.hasOwnProperty(idx)) {
                 conn = connections[idx];
                 if (conn.uid !== msg.from) { // don't echo to sender
